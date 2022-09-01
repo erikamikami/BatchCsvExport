@@ -2,12 +2,23 @@
 <!DOCTYPE mapper
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
+  
 <mapper namespace="com.example.repository.EmployeeMapper">
+
+<!-- Cursor -->
 <select id="findByGender" parameterType="Integer" resultType="com.example.domain.Employee">
   SELECT id, name, age, gender FROM employee
   WHERE gender = #{gender}
   ORDER BY id;
+</select>
+
+<!-- paging -->
+<select id="findByGenderPaging" parameterType="Integer" resultType="com.example.domain.Employee">
+  SELECT id, name, age, gender FROM employee
+  WHERE gender = #{gender}
+  ORDER BY id
+  limit #{_pagesize}
+  offset #{_skiprows}
 </select>
 
 </mapper>

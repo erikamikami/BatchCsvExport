@@ -9,8 +9,8 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.item.database.JpaCursorItemReader;
-import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder;
+import org.springframework.batch.item.database.JpaPagingItemReader;
+import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.batch.item.database.orm.JpaNativeQueryProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -20,51 +20,52 @@ import com.example.config.BaseConfig;
 import com.example.domain.Employee;
 
 @Configuration
-public class JpaCursorBatchConfig extends BaseConfig{
+public class JpaPagingBatchConfig extends BaseConfig{
 	
-	// JPAで必要
 	@Autowired
 	private EntityManagerFactory entityManagerFactory;
 	
 	@Bean
 	@StepScope
-	public JpaCursorItemReader<Employee> JpaCursorReader(){
+	public JpaPagingItemReader<Employee> jpaPagingReader(){
 		// SQL
 		String sql = "SELECT id, name, age, gender FROM employee WHERE gender = :gender";
 		
 		// クエリの設定
 		JpaNativeQueryProvider<Employee> queryProvider = new JpaNativeQueryProvider<>();
-		queryProvider.setSqlQuery(sql);
 		queryProvider.setEntityClass(Employee.class);
+		queryProvider.setSqlQuery(sql);
 		
-		// クエリに流すパラメーター
+		// パラメーター
 		Map<String, Object> parameterValues = new HashMap<>();
 		parameterValues.put("gender", 1);
 		
-		return new JpaCursorItemReaderBuilder<Employee>()
-									.entityManagerFactory(entityManagerFactory)
-									.queryProvider(queryProvider)
-									.name("JpaCursorItemReader")
-									.parameterValues(parameterValues)
-									.build();
+		return new JpaPagingItemReaderBuilder<Employee>()
+				.entityManagerFactory(entityManagerFactory)
+				.name("JdbcPagingItemReader")
+				.queryProvider(queryProvider)
+				.parameterValues(parameterValues)
+				.pageSize(5)
+				.build();
 	}
 	
 	@Bean
-	public Step exportJpaCursorStep() {
-		return stepBuilderFactory.get("ExportJpaCursorStep")
-									.<Employee, Employee>chunk(10)
-									.reader(JpaCursorReader()).listener(readListener)
-									.processor(genderConvertProcessor)
-									.writer(csvWriter()).listener(writeListener)
-									.build();
+	public Step exportJpaPagingStep() {
+		return stepBuilderFactory.get("ExportJpaPagingStep")
+				.<Employee, Employee>chunk(10)
+				.reader(jpaPagingReader()).listener(readListener)
+				.processor(genderConvertProcessor)
+				.writer(csvWriter()).listener(writeListener)
+				.build();
 	}
 	
-	@Bean("JpaCursorJob")
-	public Job exportJpaCursorJob() {
-		return jobBuilderFactory.get("ExportJpaCursorJob")
-									.incrementer(new RunIdIncrementer())
-									.start(exportJpaCursorStep())
-									.build();
+	@Bean("JpaPagingJob")
+	public Job exportJpaPagingJob() throws Exception{
+		return jobBuilderFactory.get("ExportJpaPagingJob")
+				.incrementer(new RunIdIncrementer())
+				.start(exportJpaPagingStep())
+				.build();
 	}
+
 
 }

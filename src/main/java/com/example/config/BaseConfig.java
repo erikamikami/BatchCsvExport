@@ -12,6 +12,7 @@ import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -48,6 +49,7 @@ public abstract class BaseConfig {
 	protected SampleProperty sampleProperty;
 	
 	@Autowired
+	@Qualifier("GenderConvertProcessor")
 	protected GenderConvertProcessor genderConvertProcessor;
 	
 	/**
